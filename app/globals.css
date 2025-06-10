@@ -1,0 +1,314 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS pour le thème - Mode clair par défaut */
+:root {
+  /* Couleurs de base */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  
+  /* Couleurs primaires - Palette Cyber Cristal Néon */
+  --primary: 262 83.3% 57.8%;
+  --primary-foreground: 210 40% 98%;
+  --primary-glow: 262 83.3% 57.8%;
+  
+  /* Couleurs secondaires */
+  --secondary: 199 89% 48%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --secondary-glow: 199 89% 48%;
+  
+  /* Couleurs d'accent néon */
+  --neon-pink: 328 100% 54%;
+  --neon-blue: 217 91% 60%;
+  --neon-purple: 262 83.3% 57.8%;
+  --neon-cyan: 189 94% 43%;
+  
+  /* Couleurs d'interface */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 262 83.3% 57.8%;
+  
+  /* Effets glassmorphism */
+  --glass-background: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --glass-blur: 8px;
+  
+  /* Effets neumorphism 2.0 */
+  --neu-background: #ffffff;
+  --neu-shadow-light: rgba(255, 255, 255, 0.8);
+  --neu-shadow-dark: rgba(163, 177, 198, 0.6);
+  --neu-distance: 8px;
+  
+  /* Transitions et animations */
+  --transition-fast: 0.15s ease;
+  --transition-medium: 0.3s ease;
+  --transition-slow: 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+  
+  /* Bordures et rayons */
+  --radius: 0.5rem;
+  --radius-lg: 0.8rem;
+  --radius-xl: 1.2rem;
+}
+
+/* Mode sombre */
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  
+  /* Couleurs primaires - Plus vives en mode sombre */
+  --primary: 262 83.3% 65%;
+  --primary-foreground: 210 40% 98%;
+  --primary-glow: 262 83.3% 65%;
+  
+  /* Couleurs secondaires */
+  --secondary: 199 89% 58%;
+  --secondary-foreground: 210 40% 98%;
+  --secondary-glow: 199 89% 58%;
+  
+  /* Couleurs d'interface */
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 262 83.3% 65%;
+  
+  /* Effets glassmorphism - Ajustés pour le mode sombre */
+  --glass-background: rgba(18, 18, 18, 0.7);
+  --glass-border: rgba(90, 90, 90, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* Effets neumorphism 2.0 - Ajustés pour le mode sombre */
+  --neu-background: #121212;
+  --neu-shadow-light: rgba(35, 35, 35, 0.8);
+  --neu-shadow-dark: rgba(0, 0, 0, 0.7);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Scrollbar personnalisé */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/70;
+  }
+}
+
+/* Classes utilitaires pour les effets spéciaux */
+@layer components {
+  /* Glassmorphism */
+  .glass {
+    background: var(--glass-background);
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    box-shadow: var(--glass-shadow);
+  }
+  
+  /* Neumorphism 2.0 */
+  .neu-convex {
+    background: var(--neu-background);
+    border-radius: var(--radius-lg);
+    box-shadow: 
+      var(--neu-distance) var(--neu-distance) calc(var(--neu-distance) * 2) var(--neu-shadow-dark),
+      calc(var(--neu-distance) * -1) calc(var(--neu-distance) * -1) calc(var(--neu-distance) * 2) var(--neu-shadow-light);
+  }
+  
+  .neu-concave {
+    background: var(--neu-background);
+    border-radius: var(--radius-lg);
+    box-shadow: 
+      inset var(--neu-distance) var(--neu-distance) calc(var(--neu-distance) * 2) var(--neu-shadow-dark),
+      inset calc(var(--neu-distance) * -1) calc(var(--neu-distance) * -1) calc(var(--neu-distance) * 2) var(--neu-shadow-light);
+  }
+  
+  /* Effets néon */
+  .neon-text {
+    text-shadow: 
+      0 0 5px rgba(var(--primary), 0.7),
+      0 0 10px rgba(var(--primary), 0.5),
+      0 0 20px rgba(var(--primary), 0.3);
+  }
+  
+  .neon-border {
+    position: relative;
+  }
+  
+  .neon-border::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: inherit;
+    border: 2px solid transparent;
+    background: linear-gradient(
+      45deg, 
+      hsl(var(--neon-pink)), 
+      hsl(var(--neon-purple)), 
+      hsl(var(--neon-blue)), 
+      hsl(var(--neon-cyan))
+    ) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    opacity: 0.8;
+    filter: blur(1px);
+  }
+  
+  /* Cyber Cristal - Effets 3D et réflexions */
+  .crystal {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+  
+  .crystal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: rotate(30deg);
+    transition: transform var(--transition-slow);
+    z-index: -1;
+  }
+  
+  .crystal:hover::before {
+    transform: rotate(30deg) translateX(30%);
+  }
+}
+
+/* Animations */
+@layer utilities {
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .hover-scale {
+    transition: transform var(--transition-medium);
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  .hover-lift {
+    transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -10px rgba(var(--primary), 0.5);
+  }
+}
+
+/* Keyframes pour les animations */
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(var(--primary), 0.5),
+                0 0 10px rgba(var(--primary), 0.3);
+  }
+  to {
+    box-shadow: 0 0 10px rgba(var(--primary), 0.7),
+                0 0 20px rgba(var(--primary), 0.5),
+                0 0 30px rgba(var(--primary), 0.3);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Media queries pour responsive design */
+@media (max-width: 640px) {
+  :root {
+    --radius: 0.3rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.8rem;
+    --neu-distance: 5px;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
