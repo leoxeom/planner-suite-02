@@ -240,7 +240,7 @@ export default function EventSchedulesPage() {
     viewMode: 'timeline',
   });
   
-  // État pour les options d'export
+  // État pour les options d&apos;export
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     format: 'pdf',
     targetGroups: [],
@@ -264,7 +264,7 @@ export default function EventSchedulesPage() {
     })
   );
   
-  // Charger l'événement
+  // Charger l&apos;événement
   useEffect(() => {
     const loadEvent = async () => {
       try {
@@ -278,7 +278,7 @@ export default function EventSchedulesPage() {
         
         setEvent(data);
         
-        // Initialiser les filtres avec les dates de l'événement
+        // Initialiser les filtres avec les dates de l&apos;événement
         setFilters(prev => ({
           ...prev,
           startDate: data.start_date,
@@ -289,8 +289,8 @@ export default function EventSchedulesPage() {
         setSelectedDay(parseISO(data.start_date));
         
       } catch (error) {
-        console.error('Erreur lors du chargement de l\'événement:', error);
-        toast.error('Erreur lors du chargement de l\'événement');
+        console.error('Erreur lors du chargement de l&apos;événement:', error);
+        toast.error('Erreur lors du chargement de l&apos;événement');
         router.push('/dashboard/events');
       }
     };
@@ -376,9 +376,9 @@ export default function EventSchedulesPage() {
     try {
       setIsLoading(true);
       
-      // Vérifier si l'utilisateur est un régisseur ou un admin
+      // Vérifier si l&apos;utilisateur est un régisseur ou un admin
       if (profile?.role !== 'regisseur' && profile?.role !== 'admin') {
-        toast.error('Vous n\'avez pas les permissions nécessaires');
+        toast.error('Vous n&apos;avez pas les permissions nécessaires');
         return;
       }
       
@@ -433,9 +433,9 @@ export default function EventSchedulesPage() {
     try {
       setIsLoading(true);
       
-      // Vérifier si l'utilisateur est un régisseur ou un admin
+      // Vérifier si l&apos;utilisateur est un régisseur ou un admin
       if (profile?.role !== 'regisseur' && profile?.role !== 'admin') {
-        toast.error('Vous n\'avez pas les permissions nécessaires');
+        toast.error('Vous n&apos;avez pas les permissions nécessaires');
         return;
       }
       
@@ -464,7 +464,7 @@ export default function EventSchedulesPage() {
     }
   };
   
-  // Fonction pour mettre à jour l'ordre des feuilles de route avec @dnd-kit
+  // Fonction pour mettre à jour l&apos;ordre des feuilles de route avec @dnd-kit
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -485,7 +485,7 @@ export default function EventSchedulesPage() {
         // Réorganiser les éléments avec arrayMove de @dnd-kit
         const newDaySchedules = arrayMove(daySchedules, activeIndex, overIndex);
         
-        // Mettre à jour l'affichage
+        // Mettre à jour l&apos;affichage
         const newSchedules = [...schedules];
         
         // Remplacer les anciennes entrées par les nouvelles
@@ -500,8 +500,8 @@ export default function EventSchedulesPage() {
         
         setSchedules(newSchedules);
         
-        // TODO: Mettre à jour l'ordre dans la base de données
-        // Cette fonctionnalité nécessiterait une colonne 'order' dans la table daily_schedules
+        // TODO: Mettre à jour l&apos;ordre dans la base de données
+        // Cette fonctionnalité nécessiterait une colonne &apos;order&apos; dans la table daily_schedules
         toast.success('Ordre mis à jour');
       }
     } catch (error) {
@@ -515,7 +515,7 @@ export default function EventSchedulesPage() {
     try {
       setIsLoading(true);
       
-      // Filtrer les feuilles de route selon les options d'export
+      // Filtrer les feuilles de route selon les options d&apos;export
       let filteredSchedules = [...schedules];
       
       // Filtrer par groupe cible
@@ -586,8 +586,8 @@ export default function EventSchedulesPage() {
       */
       
     } catch (error) {
-      console.error('Erreur lors de l\'export:', error);
-      toast.error('Erreur lors de l\'export');
+      console.error('Erreur lors de l&apos;export:', error);
+      toast.error('Erreur lors de l&apos;export');
       setIsLoading(false);
     }
   };
@@ -643,7 +643,7 @@ export default function EventSchedulesPage() {
     return 'Non spécifié';
   };
   
-  // Fonction pour formater l'heure
+  // Fonction pour formater l&apos;heure
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
     return `${hours}h${minutes}`;
@@ -661,7 +661,7 @@ export default function EventSchedulesPage() {
               className="text-muted-foreground hover:text-foreground flex items-center"
             >
               <ChevronLeft className="w-5 h-5 mr-1" />
-              Retour à l'événement
+              Retour à l&apos;événement
             </Link>
           </div>
           <h1 className="text-3xl font-bold mt-2">{event?.title || 'Chargement...'}</h1>
@@ -1109,7 +1109,7 @@ export default function EventSchedulesPage() {
         </div>
       )}
       
-      {/* Modal d'export */}
+      {/* Modal d&apos;export */}
       {isExportModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="glass rounded-xl w-full max-w-md p-6">
@@ -1312,12 +1312,12 @@ export default function EventSchedulesPage() {
                       }))}
                       className="mr-2"
                     />
-                    <span>Inclure le logo et l'en-tête</span>
+                    <span>Inclure le logo et l&apos;en-tête</span>
                   </label>
                 </div>
               </div>
               
-              {/* Boutons d'action */}
+              {/* Boutons d&apos;action */}
               <div className="flex justify-end space-x-2 pt-4 border-t border-border">
                 <button
                   onClick={() => setIsExportModalOpen(false)}
