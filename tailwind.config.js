@@ -1,17 +1,48 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
+  darkMode: ["class"],
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./lib/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
-      borderRadius: {
-        lg: 'var(--global-border-radius)',
-        xl: 'calc(var(--global-border-radius) * 1.25)',
-        '2xl': 'calc(var(--global-border-radius) * 1.5)',
-      },
       colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        // Couleurs spécifiques existantes
         amber: {
           DEFAULT: '#FFBF00',
           light: '#FFD11A',
@@ -29,28 +60,6 @@ export default {
           900: '#111111',
           950: '#0A0A0A'
         },
-        primary: {
-          DEFAULT: '#007FFF',
-          light: '#3399FF',
-          dark: '#0047B3',
-          400: '#66A3FF',
-          500: '#3385FF',
-          600: '#0066FF',
-          900: '#002966'
-        },
-        secondary: {
-          DEFAULT: '#F72798',
-          light: '#F94DAC',
-          dark: '#D11677'
-        },
-        accent: {
-          DEFAULT: '#FF6B57',
-          light: '#FF8C7C',
-          dark: '#FF4A32'
-        },
-        error: {
-          DEFAULT: '#EF5350'
-        },
         success: {
           DEFAULT: '#66BB6A',
           light: '#81C784',
@@ -60,7 +69,17 @@ export default {
           DEFAULT: '#FFB800',
           light: '#FFC107',
           dark: '#FFA000'
+        },
+        error: {
+          DEFAULT: '#EF5350'
         }
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+        xl: 'var(--radius-lg)',
+        '2xl': 'var(--radius-xl)',
       },
       fontFamily: {
         display: ['Anton', 'system-ui', 'sans-serif'],

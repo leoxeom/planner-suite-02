@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMiddlewareSupabaseClient } from '@/lib/supabase/client';
+import { createMiddlewareSupabase } from '@/lib/supabase/client-browser';
 
 // Routes publiques qui ne nécessitent pas d'authentification
 const publicRoutes = [
@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
   }
   
   // Créer le client Supabase pour le middleware
-  const supabase = createMiddlewareSupabaseClient(request, res);
+  const supabase = createMiddlewareSupabase(request);
   
   // Vérifier la session
   const { data: { session }, error } = await supabase.auth.getSession();

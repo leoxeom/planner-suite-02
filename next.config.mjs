@@ -25,7 +25,6 @@ const nextConfig = {
   output: 'standalone', // Mode standalone pour déploiement optimisé
   
   // Optimisations de performance
-  swcMinify: true, // Utiliser SWC pour la minification
   reactStrictMode: true, // Mode strict React pour détecter les problèmes potentiels
   
   // Configuration des redirections pour l'authentification

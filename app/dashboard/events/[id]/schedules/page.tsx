@@ -26,9 +26,12 @@ import {
   Check,
   Settings,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Eye
 } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Types pour les feuilles de route et les filtres
 type DailySchedule = {
@@ -76,6 +79,145 @@ type ExportOptions = {
   includeLogo: boolean;
 };
 
+// Composant pour les éléments triables
+function SortableScheduleItem({ 
+  schedule, 
+  index, 
+  isReordering, 
+  getTargetGroupClass, 
+  getTargetGroupLabel, 
+  formatTime, 
+  profile, 
+  eventId, 
+  duplicateSchedule, 
+  deleteSchedule 
+}: { 
+  schedule: DailySchedule; 
+  index: number; 
+  isReordering: boolean; 
+  getTargetGroupClass: (groups: string[]) => string; 
+  getTargetGroupLabel: (groups: string[]) => string; 
+  formatTime: (time: string) => string; 
+  profile: any; 
+  eventId: string; 
+  duplicateSchedule: (id: string) => Promise<void>; 
+  deleteSchedule: (id: string) => Promise<void>; 
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id: schedule.id,
+    disabled: !isReordering
+  });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+  };
+  
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`glass p-4 rounded-lg border-l-4 ${
+        getTargetGroupClass(schedule.target_groups).replace('bg-', 'border-')
+      } ${isReordering ? 'cursor-move' : ''}`}
+    >
+      <div className="flex flex-col md:flex-row justify-between">
+        <div className="flex-1">
+          <div className="flex items-center">
+            {isReordering && (
+              <div
+                {...attributes}
+                {...listeners}
+                className="mr-2 p-1 rounded-md hover:bg-accent/50"
+              >
+                <Move className="w-5 h-5 text-muted-foreground" />
+              </div>
+            )}
+            <h4 className="font-medium text-lg">{schedule.title}</h4>
+            <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getTargetGroupClass(schedule.target_groups)}`}>
+              {getTargetGroupLabel(schedule.target_groups)}
+            </span>
+          </div>
+          
+          <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2">
+            <div className="flex items-center text-sm">
+              <Clock className="w-4 h-4 mr-1 text-muted-foreground" />
+              <span>
+                {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+              </span>
+            </div>
+            
+            {schedule.location && (
+              <div className="flex items-center text-sm">
+                <AlertCircle className="w-4 h-4 mr-1 text-muted-foreground" />
+                <span>{schedule.location}</span>
+              </div>
+            )}
+            
+            {schedule.responsible_person && (
+              <div className="flex items-center text-sm">
+                <Users className="w-4 h-4 mr-1 text-muted-foreground" />
+                <span>Responsable: {schedule.responsible_person}</span>
+              </div>
+            )}
+          </div>
+          
+          {schedule.description && (
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+              {schedule.description}
+            </p>
+          )}
+        </div>
+        
+        {!isReordering && (profile?.role === 'regisseur' || profile?.role === 'admin') && (
+          <div className="flex mt-4 md:mt-0 space-x-2">
+            <Link 
+              href={`/dashboard/events/${eventId}/schedules/${schedule.id}`}
+              className="p-2 rounded-md hover:bg-accent/50"
+              title="Voir les détails"
+            >
+              <Eye className="w-4 h-4" />
+            </Link>
+            
+            <Link 
+              href={`/dashboard/events/${eventId}/schedules/${schedule.id}/edit`}
+              className="p-2 rounded-md hover:bg-accent/50"
+              title="Modifier"
+            >
+              <Edit className="w-4 h-4" />
+            </Link>
+            
+            <button 
+              onClick={() => duplicateSchedule(schedule.id)}
+              className="p-2 rounded-md hover:bg-accent/50"
+              title="Dupliquer"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+            
+            <button 
+              onClick={() => deleteSchedule(schedule.id)}
+              className="p-2 rounded-md hover:bg-destructive/20 text-destructive"
+              title="Supprimer"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function EventSchedulesPage() {
   const params = useParams();
   const router = useRouter();
@@ -109,6 +251,18 @@ export default function EventSchedulesPage() {
     includeParticipants: false,
     includeLogo: true,
   });
+  
+  // Configuration des sensors pour le drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   // Charger l'événement
   useEffect(() => {
@@ -310,47 +464,46 @@ export default function EventSchedulesPage() {
     }
   };
   
-  // Fonction pour mettre à jour l'ordre des feuilles de route
-  const handleDragEnd = async (result: any) => {
-    if (!result.destination) return;
+  // Fonction pour mettre à jour l'ordre des feuilles de route avec @dnd-kit
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
     
-    const { source, destination } = result;
-    
-    // Si l'élément est déposé au même endroit
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) {
-      return;
-    }
+    if (!over || active.id === over.id) return;
     
     try {
       // Récupérer les feuilles de route du jour concerné
+      const selectedDateStr = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : '';
       const daySchedules = schedules.filter(schedule => 
-        schedule.schedule_date === source.droppableId
+        schedule.schedule_date === selectedDateStr
       );
       
-      // Réorganiser les éléments
-      const [removed] = daySchedules.splice(source.index, 1);
-      daySchedules.splice(destination.index, 0, removed);
+      // Trouver les indices des éléments déplacés
+      const activeIndex = daySchedules.findIndex(schedule => schedule.id === active.id);
+      const overIndex = daySchedules.findIndex(schedule => schedule.id === over.id);
       
-      // Mettre à jour l'affichage
-      const newSchedules = [...schedules];
-      const dayIndices = schedules
-        .map((s, i) => s.schedule_date === source.droppableId ? i : null)
-        .filter(i => i !== null) as number[];
-      
-      dayIndices.forEach((scheduleIndex, arrayIndex) => {
-        if (scheduleIndex !== null) {
-          newSchedules[scheduleIndex] = daySchedules[arrayIndex];
-        }
-      });
-      
-      setSchedules(newSchedules);
-      
-      // TODO: Mettre à jour l'ordre dans la base de données
-      // Cette fonctionnalité nécessiterait une colonne 'order' dans la table daily_schedules
-      toast.success('Ordre mis à jour');
+      if (activeIndex !== -1 && overIndex !== -1) {
+        // Réorganiser les éléments avec arrayMove de @dnd-kit
+        const newDaySchedules = arrayMove(daySchedules, activeIndex, overIndex);
+        
+        // Mettre à jour l'affichage
+        const newSchedules = [...schedules];
+        
+        // Remplacer les anciennes entrées par les nouvelles
+        schedules.forEach((schedule, index) => {
+          if (schedule.schedule_date === selectedDateStr) {
+            const newScheduleIndex = newDaySchedules.findIndex(s => s.id === schedule.id);
+            if (newScheduleIndex !== -1) {
+              newSchedules[index] = newDaySchedules[newScheduleIndex];
+            }
+          }
+        });
+        
+        setSchedules(newSchedules);
+        
+        // TODO: Mettre à jour l'ordre dans la base de données
+        // Cette fonctionnalité nécessiterait une colonne 'order' dans la table daily_schedules
+        toast.success('Ordre mis à jour');
+      }
     } catch (error) {
       console.error('Erreur lors de la réorganisation:', error);
       toast.error('Erreur lors de la réorganisation');
@@ -750,125 +903,40 @@ export default function EventSchedulesPage() {
                 {format(selectedDay, 'EEEE dd MMMM yyyy', { locale: fr })}
               </h3>
               
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId={format(selectedDay, 'yyyy-MM-dd')}>
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-4"
-                    >
-                      {schedulesByDay[format(selectedDay, 'yyyy-MM-dd')]?.map((schedule, index) => (
-                        <Draggable
-                          key={schedule.id}
-                          draggableId={schedule.id}
-                          index={index}
-                          isDragDisabled={!isReordering}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`glass p-4 rounded-lg border-l-4 ${
-                                getTargetGroupClass(schedule.target_groups).replace('bg-', 'border-')
-                              } ${isReordering ? 'cursor-move' : ''}`}
-                            >
-                              <div className="flex flex-col md:flex-row justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center">
-                                    {isReordering && (
-                                      <div
-                                        {...provided.dragHandleProps}
-                                        className="mr-2 p-1 rounded-md hover:bg-accent/50"
-                                      >
-                                        <Move className="w-5 h-5 text-muted-foreground" />
-                                      </div>
-                                    )}
-                                    <h4 className="font-medium text-lg">{schedule.title}</h4>
-                                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getTargetGroupClass(schedule.target_groups)}`}>
-                                      {getTargetGroupLabel(schedule.target_groups)}
-                                    </span>
-                                  </div>
-                                  
-                                  <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2">
-                                    <div className="flex items-center text-sm">
-                                      <Clock className="w-4 h-4 mr-1 text-muted-foreground" />
-                                      <span>
-                                        {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
-                                      </span>
-                                    </div>
-                                    
-                                    {schedule.location && (
-                                      <div className="flex items-center text-sm">
-                                        <AlertCircle className="w-4 h-4 mr-1 text-muted-foreground" />
-                                        <span>{schedule.location}</span>
-                                      </div>
-                                    )}
-                                    
-                                    {schedule.responsible_person && (
-                                      <div className="flex items-center text-sm">
-                                        <Users className="w-4 h-4 mr-1 text-muted-foreground" />
-                                        <span>Responsable: {schedule.responsible_person}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  
-                                  {schedule.description && (
-                                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                      {schedule.description}
-                                    </p>
-                                  )}
-                                </div>
-                                
-                                {!isReordering && (profile?.role === 'regisseur' || profile?.role === 'admin') && (
-                                  <div className="flex mt-4 md:mt-0 space-x-2">
-                                    <Link 
-                                      href={`/dashboard/events/${eventId}/schedules/${schedule.id}`}
-                                      className="p-2 rounded-md hover:bg-accent/50"
-                                      title="Voir les détails"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </Link>
-                                    
-                                    <Link 
-                                      href={`/dashboard/events/${eventId}/schedules/${schedule.id}/edit`}
-                                      className="p-2 rounded-md hover:bg-accent/50"
-                                      title="Modifier"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </Link>
-                                    
-                                    <button 
-                                      onClick={() => duplicateSchedule(schedule.id)}
-                                      className="p-2 rounded-md hover:bg-accent/50"
-                                      title="Dupliquer"
-                                    >
-                                      <Copy className="w-4 h-4" />
-                                    </button>
-                                    
-                                    <button 
-                                      onClick={() => deleteSchedule(schedule.id)}
-                                      className="p-2 rounded-md hover:bg-destructive/20 text-destructive"
-                                      title="Supprimer"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      )) || (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Aucune feuille de route pour cette journée
-                        </div>
-                      )}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+              {/* DndContext remplace DragDropContext */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                {/* SortableContext remplace Droppable */}
+                <SortableContext
+                  items={schedulesByDay[format(selectedDay, 'yyyy-MM-dd')]?.map(schedule => schedule.id) || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-4">
+                    {schedulesByDay[format(selectedDay, 'yyyy-MM-dd')]?.map((schedule, index) => (
+                      <SortableScheduleItem
+                        key={schedule.id}
+                        schedule={schedule}
+                        index={index}
+                        isReordering={isReordering}
+                        getTargetGroupClass={getTargetGroupClass}
+                        getTargetGroupLabel={getTargetGroupLabel}
+                        formatTime={formatTime}
+                        profile={profile}
+                        eventId={eventId}
+                        duplicateSchedule={duplicateSchedule}
+                        deleteSchedule={deleteSchedule}
+                      />
+                    )) || (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Aucune feuille de route pour cette journée
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           )}
         </div>

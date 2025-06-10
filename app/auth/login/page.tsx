@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClientComponentSupabase } from '@/lib/supabase/client-browser';
 import { Calendar, ArrowRight, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
@@ -16,7 +16,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/';
-  const supabase = createClientComponentClient();
+  const supabase = createClientComponentSupabase();
 
   // Vérification si déjà authentifié
   useEffect(() => {

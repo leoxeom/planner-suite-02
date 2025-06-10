@@ -3,13 +3,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  createClientComponentClient, 
   type Session, 
   type User, 
   type SupabaseClient 
-} from '@supabase/auth-helpers-nextjs';
+} from '@supabase/supabase-js';
 import { toast } from 'react-hot-toast';
 import { Database } from '@/lib/supabase/client';
+import { createClientComponentSupabase } from '@/lib/supabase/client-browser';
 
 // Types pour le contexte d'authentification
 type SupabaseContextType = {
@@ -35,7 +35,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   
   const router = useRouter();
-  const supabase = createClientComponentClient<Database>();
+  const supabase = createClientComponentSupabase();
   
   // Fonction pour rafraîchir la session
   const refreshSession = async () => {

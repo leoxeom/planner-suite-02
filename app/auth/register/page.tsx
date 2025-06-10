@@ -1,30 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Calendar, ArrowRight, Loader2, Mail, Lock, User, Eye, EyeOff, UserCog } from 'lucide-react';
+import { createClientComponentSupabase } from '@/lib/supabase/client-browser';
+import { Calendar, ArrowRight, Loader2, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [role, setRole] = useState<'regisseur' | 'intermittent'>('intermittent');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    fullName?: string;
-  }>({});
-  
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo') || '/';
+  const supabase = createClientComponentSupabase();
 
   // Vérification si déjà authentifié
   useEffect(() => {
@@ -32,101 +26,68 @@ export default function RegisterPage() {
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (session && !error) {
-        // Récupérer le profil pour déterminer le rôle
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (!profileError && profile) {
-          // Redirection selon le rôle
-          switch (profile.role) {
-            case 'regisseur':
-              router.push('/dashboard/regisseur');
-              break;
-            case 'intermittent':
-              router.push('/dashboard/intermittent');
-              break;
-            case 'admin':
-              router.push('/dashboard/admin');
-              break;
-            default:
-              router.push('/');
-          }
-        } else {
-          router.push('/');
-        }
+        router.push(redirectTo);
       }
     };
     
     checkAuth();
-  }, [router, supabase]);
-
-  // Validation des champs
-  const validateForm = () => {
-    const newErrors: typeof errors = {};
-    let isValid = true;
-
-    // Validation email
-    if (!email.trim()) {
-      newErrors.email = 'L\'email est requis';
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Format d\'email invalide';
-      isValid = false;
-    }
-
-    // Validation mot de passe
-    if (!password) {
-      newErrors.password = 'Le mot de passe est requis';
-      isValid = false;
-    } else if (password.length < 8) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
-      isValid = false;
-    }
-
-    // Validation confirmation mot de passe
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
-      isValid = false;
-    }
-
-    // Validation nom complet
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Le nom complet est requis';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
+  }, [router, redirectTo, supabase]);
 
   // Gestion de la soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation du formulaire
-    if (!validateForm()) {
-      return;
-    }
-    
     setIsLoading(true);
 
     try {
-      // Préparation des données utilisateur pour le profil
-      const userData = {
-        full_name: fullName,
-        role: role,
-        username: email.split('@')[0], // Nom d'utilisateur par défaut basé sur l'email
-      };
+      // Validation basique
+      if (!email.trim() || !password.trim() || !username.trim()) {
+        toast.error('Veuillez remplir tous les champs obligatoires');
+        setIsLoading(false);
+        return;
+      }
 
-      // Inscription via Supabase
+      if (password !== confirmPassword) {
+        toast.error('Les mots de passe ne correspondent pas');
+        setIsLoading(false);
+        return;
+      }
+
+      if (password.length < 8) {
+        toast.error('Le mot de passe doit contenir au moins 8 caractères');
+        setIsLoading(false);
+        return;
+      }
+
+      // Vérifier si l'email existe déjà
+      const { data: existingUsers, error: emailCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .limit(1);
+
+      if (emailCheckError) {
+        console.error('Erreur lors de la vérification du nom d\'utilisateur:', emailCheckError);
+        toast.error('Erreur lors de la vérification du nom d\'utilisateur');
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        toast.error('Ce nom d\'utilisateur est déjà utilisé');
+        setIsLoading(false);
+        return;
+      }
+
+      // Inscription
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData,
+          data: {
+            username,
+            role,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -134,7 +95,7 @@ export default function RegisterPage() {
         console.error('Erreur d\'inscription:', error);
         
         // Messages d'erreur personnalisés
-        if (error.message?.includes('email already registered')) {
+        if (error.message?.includes('email already')) {
           toast.error('Cet email est déjà utilisé');
         } else {
           toast.error(`Erreur d'inscription: ${error.message}`);
@@ -144,11 +105,36 @@ export default function RegisterPage() {
         return;
       }
 
+      // Création du profil utilisateur
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              username,
+              role,
+              availability_status: 'available',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+
+        if (profileError) {
+          console.error('Erreur lors de la création du profil:', profileError);
+          toast.error('Erreur lors de la création du profil');
+          
+          // Supprimer l'utilisateur si la création du profil échoue
+          await supabase.auth.admin.deleteUser(data.user.id);
+          
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // Inscription réussie
       toast.success('Inscription réussie! Veuillez vérifier votre email pour confirmer votre compte.');
-      
-      // Redirection vers la page de confirmation
-      router.push('/auth/verify-email?email=' + encodeURIComponent(email));
+      router.push('/auth/login');
     } catch (error: any) {
       console.error('Erreur inattendue:', error);
       toast.error('Une erreur inattendue est survenue');
@@ -171,11 +157,31 @@ export default function RegisterPage() {
         </div>
 
         {/* Formulaire */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nom d'utilisateur */}
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">
+              Nom d'utilisateur <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="votre_nom"
+                className="w-full pl-10 py-2 border border-border rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading}
+                required
+              />
+            </div>
+          </div>
+
           {/* Email */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
-              Email
+              Email <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -185,75 +191,17 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
-                className={`w-full pl-10 py-2 border ${errors.email ? 'border-destructive' : 'border-border'} rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary`}
+                className="w-full pl-10 py-2 border border-border rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={isLoading}
                 required
               />
-            </div>
-            {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
-          </div>
-
-          {/* Nom complet */}
-          <div className="space-y-1">
-            <label htmlFor="fullName" className="text-sm font-medium">
-              Nom complet
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jean Dupont"
-                className={`w-full pl-10 py-2 border ${errors.fullName ? 'border-destructive' : 'border-border'} rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary`}
-                disabled={isLoading}
-                required
-              />
-            </div>
-            {errors.fullName && <p className="text-destructive text-xs mt-1">{errors.fullName}</p>}
-          </div>
-
-          {/* Rôle */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">
-              Rôle
-            </label>
-            <div className="relative flex items-center">
-              <UserCog className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <div className="w-full pl-10 py-2 flex space-x-4">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="intermittent"
-                    checked={role === 'intermittent'}
-                    onChange={() => setRole('intermittent')}
-                    className="w-4 h-4 text-primary"
-                    disabled={isLoading}
-                  />
-                  <span>Intermittent</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="regisseur"
-                    checked={role === 'regisseur'}
-                    onChange={() => setRole('regisseur')}
-                    className="w-4 h-4 text-primary"
-                    disabled={isLoading}
-                  />
-                  <span>Régisseur</span>
-                </label>
-              </div>
             </div>
           </div>
 
           {/* Mot de passe */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium">
-              Mot de passe
+              Mot de passe <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -262,10 +210,11 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 8 caractères"
-                className={`w-full pl-10 pr-10 py-2 border ${errors.password ? 'border-destructive' : 'border-border'} rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary`}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-10 py-2 border border-border rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={isLoading}
                 required
+                minLength={8}
               />
               <button
                 type="button"
@@ -276,43 +225,69 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
+            <p className="text-xs text-muted-foreground">
+              Minimum 8 caractères
+            </p>
           </div>
 
           {/* Confirmation mot de passe */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <label htmlFor="confirmPassword" className="text-sm font-medium">
-              Confirmer le mot de passe
+              Confirmer le mot de passe <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input
                 id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
+                type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirmez votre mot de passe"
-                className={`w-full pl-10 pr-10 py-2 border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary`}
+                placeholder="••••••••"
+                className="w-full pl-10 py-2 border border-border rounded-md bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={isLoading}
                 required
               />
+            </div>
+          </div>
+
+          {/* Choix du rôle */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Je suis <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                onClick={() => setRole('regisseur')}
+                className={`py-2 px-4 rounded-md border ${
+                  role === 'regisseur'
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-background/50 border-border hover:bg-accent/30'
+                } transition-all flex items-center justify-center`}
+                disabled={isLoading}
               >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                Régisseur
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('intermittent')}
+                className={`py-2 px-4 rounded-md border ${
+                  role === 'intermittent'
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-background/50 border-border hover:bg-accent/30'
+                } transition-all flex items-center justify-center`}
+                disabled={isLoading}
+              >
+                Intermittent
               </button>
             </div>
-            {errors.confirmPassword && <p className="text-destructive text-xs mt-1">{errors.confirmPassword}</p>}
           </div>
 
           {/* Bouton d'inscription */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all flex items-center justify-center hover-lift mt-4"
+            className="w-full mt-6 py-2 px-4 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all flex items-center justify-center hover-lift"
           >
             {isLoading ? (
               <>
@@ -321,7 +296,7 @@ export default function RegisterPage() {
               </>
             ) : (
               <>
-                S'inscrire
+                Créer un compte
                 <ArrowRight className="ml-2 w-5 h-5" />
               </>
             )}
@@ -339,17 +314,16 @@ export default function RegisterPage() {
         </div>
 
         {/* Conditions d'utilisation */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-muted-foreground">
-            En vous inscrivant, vous acceptez nos{' '}
-            <Link href="/terms" className="text-primary hover:underline">
-              Conditions d'utilisation
-            </Link>{' '}
-            et notre{' '}
-            <Link href="/privacy" className="text-primary hover:underline">
-              Politique de confidentialité
-            </Link>
-          </p>
+        <div className="mt-6 text-xs text-center text-muted-foreground">
+          En créant un compte, vous acceptez nos{' '}
+          <Link href="/terms" className="text-primary hover:underline">
+            Conditions d'utilisation
+          </Link>{' '}
+          et notre{' '}
+          <Link href="/privacy" className="text-primary hover:underline">
+            Politique de confidentialité
+          </Link>
+          .
         </div>
       </div>
     </div>
