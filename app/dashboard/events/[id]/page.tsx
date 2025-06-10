@@ -35,6 +35,7 @@ import {
   CalendarRange,
   Info,
   X,
+  User,
 } from 'lucide-react';
 
 export default function EventDetailPage() {
@@ -57,13 +58,13 @@ export default function EventDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   
-  // Chargement des données de l'événement
+  // Chargement des données de l&apos;événement
   useEffect(() => {
     const loadEventData = async () => {
       setIsLoading(true);
       try {
         await executeAuthOperation(async () => {
-          // Récupérer les détails de l'événement
+          // Récupérer les détails de l&apos;événement
           const { data: eventData, error: eventError } = await supabase
             .from('events')
             .select(`
@@ -102,7 +103,7 @@ export default function EventDetailPage() {
           
           setParticipants(participantsData);
           
-          // Vérifier si l'utilisateur actuel participe à l'événement
+          // Vérifier si l&apos;utilisateur actuel participe à l&apos;événement
           const userParticipation = participantsData.find(
             (p) => p.profiles?.id === profile?.id
           );
@@ -125,8 +126,8 @@ export default function EventDetailPage() {
           
           setSchedules(schedulesData);
           
-          // Récupérer l'historique des modifications (simulé pour le moment)
-          // Dans une implémentation réelle, vous pourriez avoir une table d'historique
+          // Récupérer l&apos;historique des modifications (simulé pour le moment)
+          // Dans une implémentation réelle, vous pourriez avoir une table d&apos;historique
           setEventHistory([
             {
               id: '1',
@@ -174,13 +175,13 @@ export default function EventDetailPage() {
     setIsActionLoading(true);
     try {
       await executeAuthOperation(async () => {
-        // Vérifier si l'utilisateur est déjà participant
+        // Vérifier si l&apos;utilisateur est déjà participant
         if (isParticipating) {
           toast.error('Vous participez déjà à cet événement');
           return;
         }
         
-        // Ajouter l'utilisateur comme participant
+        // Ajouter l&apos;utilisateur comme participant
         const { data, error } = await supabase
           .from('event_participants')
           .insert({
@@ -194,9 +195,9 @@ export default function EventDetailPage() {
         
         if (error) throw error;
         
-        toast.success('Vous avez rejoint l\'événement avec succès');
+        toast.success('Vous avez rejoint l&apos;événement avec succès');
         
-        // Mettre à jour l'état local
+        // Mettre à jour l&apos;état local
         setIsParticipating(true);
         setParticipationStatus('confirmed');
         setParticipationId(data.id);
@@ -223,8 +224,8 @@ export default function EventDetailPage() {
         setParticipants(participantsData);
       });
     } catch (error) {
-      console.error('Erreur lors de la participation à l\'événement:', error);
-      toast.error('Erreur lors de la participation à l\'événement');
+      console.error('Erreur lors de la participation à l&apos;événement:', error);
+      toast.error('Erreur lors de la participation à l&apos;événement');
     } finally {
       setIsActionLoading(false);
     }
@@ -237,7 +238,7 @@ export default function EventDetailPage() {
     setIsActionLoading(true);
     try {
       await executeAuthOperation(async () => {
-        // Vérifier si l'utilisateur est participant
+        // Vérifier si l&apos;utilisateur est participant
         if (!isParticipating) {
           toast.error('Vous ne participez pas à cet événement');
           return;
@@ -251,9 +252,9 @@ export default function EventDetailPage() {
         
         if (error) throw error;
         
-        toast.success('Vous avez quitté l\'événement avec succès');
+        toast.success('Vous avez quitté l&apos;événement avec succès');
         
-        // Mettre à jour l'état local
+        // Mettre à jour l&apos;état local
         setIsParticipating(false);
         setParticipationStatus(null);
         setParticipationId(null);
@@ -280,8 +281,8 @@ export default function EventDetailPage() {
         setParticipants(participantsData);
       });
     } catch (error) {
-      console.error('Erreur lors du retrait de l\'événement:', error);
-      toast.error('Erreur lors du retrait de l\'événement');
+      console.error('Erreur lors du retrait de l&apos;événement:', error);
+      toast.error('Erreur lors du retrait de l&apos;événement');
     } finally {
       setIsActionLoading(false);
     }
@@ -307,7 +308,7 @@ export default function EventDetailPage() {
         
         toast.success(`Invitation ${accept ? 'acceptée' : 'refusée'} avec succès`);
         
-        // Mettre à jour l'état local
+        // Mettre à jour l&apos;état local
         setParticipationStatus(accept ? 'confirmed' : 'declined');
         
         // Recharger les participants
@@ -332,20 +333,20 @@ export default function EventDetailPage() {
         setParticipants(participantsData);
       });
     } catch (error) {
-      console.error('Erreur lors de la réponse à l\'invitation:', error);
-      toast.error('Erreur lors de la réponse à l\'invitation');
+      console.error('Erreur lors de la réponse à l&apos;invitation:', error);
+      toast.error('Erreur lors de la réponse à l&apos;invitation');
     } finally {
       setIsActionLoading(false);
     }
   };
   
-  // Fonction pour changer le statut de l'événement
+  // Fonction pour changer le statut de l&apos;événement
   const changeEventStatus = async (newStatus: 'draft' | 'published' | 'cancelled' | 'completed') => {
     if (!profile) return;
     
-    // Vérifier si l'utilisateur est un régisseur ou un admin
+    // Vérifier si l&apos;utilisateur est un régisseur ou un admin
     if (profile.role !== 'regisseur' && profile.role !== 'admin') {
-      toast.error('Vous n\'avez pas les permissions nécessaires');
+      toast.error('Vous n&apos;avez pas les permissions nécessaires');
       return;
     }
     
@@ -361,7 +362,7 @@ export default function EventDetailPage() {
           updates.published_at = new Date().toISOString();
         }
         
-        // Mettre à jour le statut de l'événement
+        // Mettre à jour le statut de l&apos;événement
         const { data, error } = await supabase
           .from('events')
           .update(updates)
@@ -371,16 +372,16 @@ export default function EventDetailPage() {
         
         if (error) throw error;
         
-        toast.success(`Statut de l'événement mis à jour: ${getStatusLabel(newStatus)}`);
+        toast.success(`Statut de l&apos;événement mis à jour: ${getStatusLabel(newStatus)}`);
         
-        // Mettre à jour l'état local
+        // Mettre à jour l&apos;état local
         setEvent({
           ...event,
           status: newStatus,
           published_at: newStatus === 'published' ? new Date().toISOString() : event.published_at,
         });
         
-        // Ajouter à l'historique
+        // Ajouter à l&apos;historique
         setEventHistory([
           ...eventHistory,
           {
@@ -404,20 +405,20 @@ export default function EventDetailPage() {
     }
   };
   
-  // Fonction pour supprimer l'événement
+  // Fonction pour supprimer l&apos;événement
   const deleteEvent = async () => {
     if (!profile) return;
     
-    // Vérifier si l'utilisateur est un régisseur ou un admin
+    // Vérifier si l&apos;utilisateur est un régisseur ou un admin
     if (profile.role !== 'regisseur' && profile.role !== 'admin') {
-      toast.error('Vous n\'avez pas les permissions nécessaires');
+      toast.error('Vous n&apos;avez pas les permissions nécessaires');
       return;
     }
     
     setIsActionLoading(true);
     try {
       await executeAuthOperation(async () => {
-        // Supprimer l'événement
+        // Supprimer l&apos;événement
         const { error } = await supabase
           .from('events')
           .delete()
@@ -537,7 +538,7 @@ export default function EventDetailPage() {
     }
   };
   
-  // Fonction pour obtenir l'icône du groupe cible
+  // Fonction pour obtenir l&apos;icône du groupe cible
   const getTargetGroupIcon = (targetGroup: string) => {
     switch (targetGroup) {
       case 'artistes':
@@ -565,7 +566,7 @@ export default function EventDetailPage() {
     }
   };
   
-  // Fonction pour obtenir l'icône d'action d'historique
+  // Fonction pour obtenir l&apos;icône d&apos;action d&apos;historique
   const getHistoryActionIcon = (action: string) => {
     switch (action) {
       case 'create':
@@ -585,7 +586,7 @@ export default function EventDetailPage() {
     }
   };
   
-  // Fonction pour obtenir la classe d'action d'historique
+  // Fonction pour obtenir la classe d&apos;action d&apos;historique
   const getHistoryActionClass = (action: string) => {
     switch (action) {
       case 'create':
@@ -619,7 +620,7 @@ export default function EventDetailPage() {
         </button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">
-            {isLoading ? 'Chargement...' : event?.title || 'Détails de l\'événement'}
+            {isLoading ? 'Chargement...' : event?.title || 'Détails de l&apos;événement'}
           </h1>
           {!isLoading && event && (
             <p className="text-muted-foreground mt-1">
@@ -675,7 +676,7 @@ export default function EventDetailPage() {
                     <button
                       onClick={() => setIsCancelModalOpen(true)}
                       className="p-2 rounded-md hover:bg-accent/50"
-                      title="Annuler l'événement"
+                      title="Annuler l&apos;événement"
                       disabled={isActionLoading}
                     >
                       {isActionLoading ? (
@@ -796,7 +797,7 @@ export default function EventDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Statut de l'événement */}
+            {/* Statut de l&apos;événement */}
             <div className="glass p-6 rounded-xl">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -1053,7 +1054,7 @@ export default function EventDetailPage() {
                                 <div className="ml-4">
                                   <button
                                     className="p-1 rounded-md hover:bg-accent/50"
-                                    title="Plus d'options"
+                                    title="Plus d&apos;options"
                                   >
                                     <MoreHorizontal className="w-5 h-5" />
                                   </button>
@@ -1260,7 +1261,7 @@ export default function EventDetailPage() {
                           {participationStatus === 'invited' ? 'Invitation en attente' :
                            participationStatus === 'confirmed' ? 'Participation confirmée' :
                            participationStatus === 'declined' ? 'Participation refusée' :
-                           participationStatus === 'assigned' ? 'Assigné à l\'événement' :
+                           participationStatus === 'assigned' ? 'Assigné à l&apos;événement' :
                            participationStatus === 'completed' ? 'Participation terminée' :
                            'Statut inconnu'}
                         </p>
@@ -1314,7 +1315,7 @@ export default function EventDetailPage() {
                         ) : (
                           <UserMinus className="w-5 h-5 mr-2" />
                         )}
-                        Quitter l'événement
+                        Quitter l&apos;événement
                       </button>
                     )}
                   </div>
@@ -1336,7 +1337,7 @@ export default function EventDetailPage() {
                         ) : (
                           <UserPlus className="w-5 h-5 mr-2" />
                         )}
-                        Rejoindre l'événement
+                        Rejoindre l&apos;événement
                       </button>
                     )}
                   </div>
@@ -1409,7 +1410,7 @@ export default function EventDetailPage() {
                       className="w-full py-2 px-4 bg-accent/50 rounded-md hover:bg-accent/70 transition-all flex items-center justify-center"
                     >
                       <Edit className="w-5 h-5 mr-2" />
-                      Modifier l'événement
+                      Modifier l&apos;événement
                     </Link>
                     
                     <button
@@ -1464,7 +1465,7 @@ export default function EventDetailPage() {
           <AlertTriangle className="w-16 h-16 mx-auto text-amber-500 mb-4" />
           <h2 className="text-xl font-medium mb-2">Événement introuvable</h2>
           <p className="text-muted-foreground mb-6">
-            L'événement que vous recherchez n'existe pas ou vous n'avez pas les permissions nécessaires pour y accéder.
+            L&apos;événement que vous recherchez n&apos;existe pas ou vous n&apos;avez pas les permissions nécessaires pour y accéder.
           </p>
           <Link 
             href="/dashboard/events" 
@@ -1480,7 +1481,7 @@ export default function EventDetailPage() {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="glass p-6 rounded-xl max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Supprimer l'événement</h2>
+            <h2 className="text-xl font-bold mb-4">Supprimer l&apos;événement</h2>
             <p className="text-muted-foreground mb-6">
               Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.
             </p>
@@ -1510,13 +1511,13 @@ export default function EventDetailPage() {
         </div>
       )}
       
-      {/* Modale d'annulation */}
+      {/* Modale d&apos;annulation */}
       {isCancelModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="glass p-6 rounded-xl max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Annuler l'événement</h2>
+            <h2 className="text-xl font-bold mb-4">Annuler l&apos;événement</h2>
             <p className="text-muted-foreground mb-6">
-              Êtes-vous sûr de vouloir annuler cet événement ? Les participants seront notifiés de l'annulation.
+              Êtes-vous sûr de vouloir annuler cet événement ? Les participants seront notifiés de l&apos;annulation.
             </p>
             
             <div className="flex justify-end space-x-3">
@@ -1536,7 +1537,7 @@ export default function EventDetailPage() {
                 {isActionLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  'Annuler l\'événement'
+                  'Annuler l&apos;événement'
                 )}
               </button>
             </div>

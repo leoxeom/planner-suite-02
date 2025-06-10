@@ -77,7 +77,7 @@ export default function LoginPage() {
       if (error) {
         console.error('Erreur de connexion:', error);
         
-        // Messages d'erreur personnalisés
+        // Messages d&apos;erreur personnalisés
         if (error.message?.includes('Invalid login credentials')) {
           toast.error('Email ou mot de passe incorrect');
         } else if (error.message?.includes('Email not confirmed')) {
@@ -217,10 +217,10 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Lien d'inscription */}
+        {/* Lien d&apos;inscription */}
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Vous n'avez pas de compte?{' '}
+            Vous n&apos;avez pas de compte?{' '}
             <Link href="/auth/register" className="text-primary hover:underline">
               Créer un compte
             </Link>

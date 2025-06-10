@@ -373,11 +373,8 @@ export function createClientComponentSupabase() {
   );
 }
 
-// Client pour middleware
+// Client pour middleware - Version simplifiée
 export function createMiddlewareSupabase(req: NextRequest) {
-  // Extraire le cookie de session de la requête
-  const cookieValue = req.cookies.get(COOKIE_NAME)?.value;
-  
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -386,14 +383,6 @@ export function createMiddlewareSupabase(req: NextRequest) {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
-        cookies: {
-          get(name: string) {
-            if (name === COOKIE_NAME) {
-              return cookieValue;
-            }
-            return '';
-          },
-        },
       },
     }
   );

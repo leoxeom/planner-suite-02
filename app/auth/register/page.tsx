@@ -66,14 +66,14 @@ export default function RegisterPage() {
         .limit(1);
 
       if (emailCheckError) {
-        console.error('Erreur lors de la vérification du nom d\'utilisateur:', emailCheckError);
-        toast.error('Erreur lors de la vérification du nom d\'utilisateur');
+        console.error('Erreur lors de la vérification du nom d&apos;utilisateur:', emailCheckError);
+        toast.error('Erreur lors de la vérification du nom d&apos;utilisateur');
         setIsLoading(false);
         return;
       }
 
       if (existingUsers && existingUsers.length > 0) {
-        toast.error('Ce nom d\'utilisateur est déjà utilisé');
+        toast.error('Ce nom d&apos;utilisateur est déjà utilisé');
         setIsLoading(false);
         return;
       }
@@ -92,13 +92,13 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        console.error('Erreur d\'inscription:', error);
+        console.error('Erreur d&apos;inscription:', error);
         
-        // Messages d'erreur personnalisés
+        // Messages d&apos;erreur personnalisés
         if (error.message?.includes('email already')) {
           toast.error('Cet email est déjà utilisé');
         } else {
-          toast.error(`Erreur d'inscription: ${error.message}`);
+          toast.error(`Erreur d&apos;inscription: ${error.message}`);
         }
         
         setIsLoading(false);
@@ -124,7 +124,7 @@ export default function RegisterPage() {
           console.error('Erreur lors de la création du profil:', profileError);
           toast.error('Erreur lors de la création du profil');
           
-          // Supprimer l'utilisateur si la création du profil échoue
+          // Supprimer l&apos;utilisateur si la création du profil échoue
           await supabase.auth.admin.deleteUser(data.user.id);
           
           setIsLoading(false);
@@ -158,10 +158,10 @@ export default function RegisterPage() {
 
         {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nom d'utilisateur */}
+          {/* Nom d&apos;utilisateur */}
           <div className="space-y-2">
             <label htmlFor="username" className="text-sm font-medium">
-              Nom d'utilisateur <span className="text-red-500">*</span>
+              Nom d&apos;utilisateur <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -283,7 +283,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Bouton d'inscription */}
+          {/* Bouton d&apos;inscription */}
           <button
             type="submit"
             disabled={isLoading}
@@ -313,11 +313,11 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Conditions d'utilisation */}
+        {/* Conditions d&apos;utilisation */}
         <div className="mt-6 text-xs text-center text-muted-foreground">
           En créant un compte, vous acceptez nos{' '}
           <Link href="/terms" className="text-primary hover:underline">
-            Conditions d'utilisation
+            Conditions d&apos;utilisation
           </Link>{' '}
           et notre{' '}
           <Link href="/privacy" className="text-primary hover:underline">

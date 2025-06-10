@@ -356,9 +356,9 @@ export const COOKIE_OPTIONS = {
 };
 
 // Fonction utilitaire pour obtenir les cookies de session
-export function getSessionCookies() {
+export async function getSessionCookies() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(COOKIE_NAME);
     return sessionCookie ? { [COOKIE_NAME]: sessionCookie.value } : {};
   } catch (error) {
@@ -389,8 +389,8 @@ export function createClientComponentSupabase() {
 }
 
 // Client pour composants serveur (avec mise en cache)
-export const createServerComponentSupabase = cache(() => {
-  const cookieData = getSessionCookies();
+export const createServerComponentSupabase = cache(async () => {
+  const cookieData = await getSessionCookies();
   
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -400,19 +400,14 @@ export const createServerComponentSupabase = cache(() => {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
-        cookies: {
-          get(name: string) {
-            return cookieData[name];
-          },
-        },
       },
     }
   );
 });
 
 // Client pour Server Actions
-export function createServerActionSupabase() {
-  const cookieData = getSessionCookies();
+export async function createServerActionSupabase() {
+  const cookieData = await getSessionCookies();
   
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -422,17 +417,6 @@ export function createServerActionSupabase() {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
-        cookies: {
-          get(name: string) {
-            return cookieData[name];
-          },
-          set(name: string, value: string, options: any) {
-            cookies().set(name, value, options);
-          },
-          remove(name: string, options: any) {
-            cookies().delete({ name, ...options });
-          },
-        },
       },
     }
   );
@@ -440,9 +424,6 @@ export function createServerActionSupabase() {
 
 // Client pour middleware
 export function createMiddlewareSupabase(req: NextRequest) {
-  // Extraire le cookie de session de la requête
-  const cookieValue = req.cookies.get(COOKIE_NAME)?.value;
-  
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -451,14 +432,6 @@ export function createMiddlewareSupabase(req: NextRequest) {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
-        cookies: {
-          get(name: string) {
-            if (name === COOKIE_NAME) {
-              return cookieValue;
-            }
-            return '';
-          },
-        },
       },
     }
   );
@@ -518,13 +491,14 @@ export async function getUserProfile(userId: string) {
 
 // Fonction pour vérifier l'authentification et rediriger si nécessaire
 export async function checkAuth(supabaseClient: ReturnType<typeof createServerComponentSupabase>) {
-  const { data: { session }, error } = await supabaseClient.auth.getSession();
+  const client = await supabaseClient;
+  const { data: { session }, error } = await client.auth.getSession();
   
   if (error || !session) {
     return { isAuthenticated: false, profile: null };
   }
   
-  const { data: profile } = await supabaseClient
+  const { data: profile } = await client
     .from('profiles')
     .select('*')
     .eq('id', session.user.id)
